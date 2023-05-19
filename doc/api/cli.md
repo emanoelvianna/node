@@ -548,13 +548,15 @@ Enable experimental support for the `https:` protocol in `import` specifiers.
 added: v20.0.0
 -->
 
+> Stability: 1 - Experimental
+
 Enable the Permission Model for current process. When enabled, the
 following permissions are restricted:
 
 * File System - manageable through
-  \[`--allow-fs-read`]\[],\[`allow-fs-write`]\[] flags
-* Child Process - manageable through \[`--allow-child-process`]\[] flag
-* Worker Threads - manageable through \[`--allow-worker`]\[] flag
+  [`--allow-fs-read`][], [`--allow-fs-write`][] flags
+* Child Process - manageable through [`--allow-child-process`][] flag
+* Worker Threads - manageable through [`--allow-worker`][] flag
 
 ### `--experimental-policy`
 
@@ -624,6 +626,10 @@ Use this flag to enable [ShadowRealm][] support.
 added:
   - v19.7.0
   - v18.15.0
+changes:
+  - version: v20.1.0
+    pr-url: https://github.com/nodejs/node/pull/47686
+    description: This option can be used with `--test`.
 -->
 
 When used in conjunction with the `node:test` module, a code coverage report is
@@ -2315,7 +2321,8 @@ on unsupported platforms will not be fixed.
 ### `NODE_TEST_CONTEXT=value`
 
 If `value` equals `'child'`, test reporter options will be overridden and test
-output will be sent to stdout in the TAP format.
+output will be sent to stdout in the TAP format. If any other value is provided,
+Node.js makes no guarantees about the reporter format used or its stability.
 
 ### `NODE_TLS_REJECT_UNAUTHORIZED=value`
 
@@ -2568,6 +2575,10 @@ done
 [V8 JavaScript code coverage]: https://v8project.blogspot.com/2017/12/javascript-code-coverage.html
 [Web Crypto API]: webcrypto.md
 [`"type"`]: packages.md#type
+[`--allow-child-process`]: #--allow-child-process
+[`--allow-fs-read`]: #--allow-fs-read
+[`--allow-fs-write`]: #--allow-fs-write
+[`--allow-worker`]: #--allow-worker
 [`--cpu-prof-dir`]: #--cpu-prof-dir
 [`--diagnostic-dir`]: #--diagnostic-dirdirectory
 [`--experimental-sea-config`]: single-executable-applications.md#generating-single-executable-preparation-blobs
@@ -2580,7 +2591,7 @@ done
 [`--require`]: #-r---require-module
 [`Atomics.wait()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics/wait
 [`Buffer`]: buffer.md#class-buffer
-[`CRYPTO_secure_malloc_init`]: https://www.openssl.org/docs/man1.1.0/man3/CRYPTO_secure_malloc_init.html
+[`CRYPTO_secure_malloc_init`]: https://www.openssl.org/docs/man3.0/man3/CRYPTO_secure_malloc_init.html
 [`NODE_OPTIONS`]: #node_optionsoptions
 [`NO_COLOR`]: https://no-color.org
 [`SlowBuffer`]: buffer.md#class-slowbuffer

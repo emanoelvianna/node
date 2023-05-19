@@ -70,7 +70,7 @@ function parseTestFlags(filename = process.argv[1]) {
   fs.closeSync(fd);
   const source = buffer.toString('utf8', 0, bytesRead);
 
-  const flagStart = source.indexOf('// Flags: --') + 10;
+  const flagStart = source.search(/\/\/ Flags:\s+--/) + 10;
 
   if (flagStart === 9) {
     return [];
@@ -82,8 +82,8 @@ function parseTestFlags(filename = process.argv[1]) {
   }
   return source
     .substring(flagStart, flagEnd)
-    .replace(/_/g, '-')
-    .split(' ');
+    .split(/\s+/)
+    .filter(Boolean);
 }
 
 // Check for flags. Skip this for workers (both, the `cluster` module and
@@ -97,9 +97,8 @@ if (process.argv.length === 2 &&
     require('cluster').isPrimary &&
     fs.existsSync(process.argv[1])) {
   const flags = parseTestFlags();
-  const args = process.execArgv.map((arg) => arg.replace(/_/g, '-'));
   for (const flag of flags) {
-    if (!args.includes(flag) &&
+    if (!process.execArgv.includes(flag) &&
         // If the binary is build without `intl` the inspect option is
         // invalid. The test itself should handle this case.
         (process.features.inspector || !flag.startsWith('--inspect'))) {

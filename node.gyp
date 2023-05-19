@@ -174,6 +174,8 @@
       'src/base_object_types.h',
       'src/base64.h',
       'src/base64-inl.h',
+      'src/blob_serializer_deserializer.h',
+      'src/blob_serializer_deserializer-inl.h',
       'src/callback_queue.h',
       'src/callback_queue-inl.h',
       'src/cleanup_queue.h',
@@ -1052,6 +1054,7 @@
           'sources': [
             'test/cctest/test_crypto_clienthello.cc',
             'test/cctest/test_node_crypto.cc',
+            'test/cctest/test_node_crypto_env.cc',
             'test/cctest/test_quic_cid.cc',
             'test/cctest/test_quic_tokens.cc',
           ]

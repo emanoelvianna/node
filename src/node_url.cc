@@ -19,11 +19,13 @@ using v8::CFunction;
 using v8::Context;
 using v8::FastOneByteString;
 using v8::FunctionCallbackInfo;
+using v8::FunctionTemplate;
 using v8::HandleScope;
 using v8::Isolate;
 using v8::Local;
 using v8::NewStringType;
 using v8::Object;
+using v8::ObjectTemplate;
 using v8::String;
 using v8::Value;
 
@@ -123,32 +125,25 @@ void BindingData::CanParse(const FunctionCallbackInfo<Value>& args) {
 
   Environment* env = Environment::GetCurrent(args);
   HandleScope handle_scope(env->isolate());
-  Context::Scope context_scope(env->context());
 
   Utf8Value input(env->isolate(), args[0]);
-  ada::result<ada::url_aggregator> base;
-  ada::url_aggregator* base_pointer = nullptr;
-  if (args[1]->IsString()) {
-    base = ada::parse<ada::url_aggregator>(
-        Utf8Value(env->isolate(), args[1]).ToString());
-    if (!base) {
-      return args.GetReturnValue().Set(false);
-    }
-    base_pointer = &base.value();
-  }
-  auto out =
-      ada::parse<ada::url_aggregator>(input.ToStringView(), base_pointer);
+  std::string_view input_view = input.ToStringView();
 
-  args.GetReturnValue().Set(out.has_value());
+  bool can_parse{};
+  if (args[1]->IsString()) {
+    Utf8Value base(env->isolate(), args[1]);
+    std::string_view base_view = base.ToStringView();
+    can_parse = ada::can_parse(input_view, &base_view);
+  } else {
+    can_parse = ada::can_parse(input_view);
+  }
+
+  args.GetReturnValue().Set(can_parse);
 }
 
 bool BindingData::FastCanParse(Local<Value> receiver,
                                const FastOneByteString& input) {
-  std::string_view input_view(input.data, input.length);
-
-  auto output = ada::parse<ada::url_aggregator>(input_view);
-
-  return output.has_value();
+  return ada::can_parse(std::string_view(input.data, input.length));
 }
 
 CFunction BindingData::fast_can_parse_(CFunction::Make(FastCanParse));
@@ -322,22 +317,25 @@ void BindingData::UpdateComponents(const ada::url_components& components,
                 "kURLComponentsLength should be up-to-date");
 }
 
-void BindingData::Initialize(Local<Object> target,
-                             Local<Value> unused,
-                             Local<Context> context,
-                             void* priv) {
-  Realm* realm = Realm::GetCurrent(context);
-  BindingData* const binding_data =
-      realm->AddBindingData<BindingData>(context, target);
-  if (binding_data == nullptr) return;
-
-  SetMethodNoSideEffect(context, target, "domainToASCII", DomainToASCII);
-  SetMethodNoSideEffect(context, target, "domainToUnicode", DomainToUnicode);
-  SetMethodNoSideEffect(context, target, "format", Format);
-  SetMethod(context, target, "parse", Parse);
-  SetMethod(context, target, "update", Update);
+void BindingData::CreatePerIsolateProperties(IsolateData* isolate_data,
+                                             Local<FunctionTemplate> ctor) {
+  Isolate* isolate = isolate_data->isolate();
+  Local<ObjectTemplate> target = ctor->InstanceTemplate();
+  SetMethodNoSideEffect(isolate, target, "domainToASCII", DomainToASCII);
+  SetMethodNoSideEffect(isolate, target, "domainToUnicode", DomainToUnicode);
+  SetMethodNoSideEffect(isolate, target, "format", Format);
+  SetMethod(isolate, target, "parse", Parse);
+  SetMethod(isolate, target, "update", Update);
   SetFastMethodNoSideEffect(
-      context, target, "canParse", CanParse, &fast_can_parse_);
+      isolate, target, "canParse", CanParse, &fast_can_parse_);
+}
+
+void BindingData::CreatePerContextProperties(Local<Object> target,
+                                             Local<Value> unused,
+                                             Local<Context> context,
+                                             void* priv) {
+  Realm* realm = Realm::GetCurrent(context);
+  realm->AddBindingData<BindingData>(context, target);
 }
 
 void BindingData::RegisterExternalReferences(
@@ -365,6 +363,9 @@ std::string FromFilePath(const std::string_view file_path) {
 
 }  // namespace node
 
-NODE_BINDING_CONTEXT_AWARE_INTERNAL(url, node::url::BindingData::Initialize)
+NODE_BINDING_CONTEXT_AWARE_INTERNAL(
+    url, node::url::BindingData::CreatePerContextProperties)
+NODE_BINDING_PER_ISOLATE_INIT(
+    url, node::url::BindingData::CreatePerIsolateProperties)
 NODE_BINDING_EXTERNAL_REFERENCE(
     url, node::url::BindingData::RegisterExternalReferences)

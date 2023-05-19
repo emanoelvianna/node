@@ -62,18 +62,16 @@ inline X509_STORE* GetOrCreateRootCertStore() {
 // Takes a string or buffer and loads it into a BIO.
 // Caller responsible for BIO_free_all-ing the returned object.
 BIOPointer LoadBIO(Environment* env, Local<Value> v) {
-  HandleScope scope(env->isolate());
-
-  if (v->IsString()) {
-    Utf8Value s(env->isolate(), v);
-    return NodeBIO::NewFixed(*s, s.length());
+  if (v->IsString() || v->IsArrayBufferView()) {
+    BIOPointer bio(BIO_new(BIO_s_secmem()));
+    if (!bio) return nullptr;
+    ByteSource bsrc = ByteSource::FromStringOrBuffer(env, v);
+    if (bsrc.size() > INT_MAX) return nullptr;
+    int written = BIO_write(bio.get(), bsrc.data<char>(), bsrc.size());
+    if (written < 0) return nullptr;
+    if (static_cast<size_t>(written) != bsrc.size()) return nullptr;
+    return bio;
   }
-
-  if (v->IsArrayBufferView()) {
-    ArrayBufferViewContents<char> buf(v.As<ArrayBufferView>());
-    return NodeBIO::NewFixed(buf.data(), buf.length());
-  }
-
   return nullptr;
 }
 
@@ -840,8 +838,7 @@ void SecureContext::SetECDHCurve(const FunctionCallbackInfo<Value>& args) {
 
   Utf8Value curve(env->isolate(), args[0]);
 
-  if (strcmp(*curve, "auto") != 0 &&
-      !SSL_CTX_set1_curves_list(sc->ctx_.get(), *curve)) {
+  if (curve != "auto" && !SSL_CTX_set1_curves_list(sc->ctx_.get(), *curve)) {
     return THROW_ERR_CRYPTO_OPERATION_FAILED(env, "Failed to set ECDH curve");
   }
 }

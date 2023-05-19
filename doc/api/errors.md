@@ -861,8 +861,9 @@ size is reached when the context is created.
 
 ### `ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED`
 
-A client certificate engine was requested that is not supported by the version
-of OpenSSL being used.
+An OpenSSL engine was requested (for example, through the `clientCertEngine` or
+`privateKeyEngine` TLS options) that is not supported by the version of OpenSSL
+being used, likely due to the compile-time flag `OPENSSL_NO_ENGINE`.
 
 <a id="ERR_CRYPTO_ECDH_INVALID_FORMAT"></a>
 
@@ -1338,6 +1339,11 @@ When using [`fs.cp()`][], `src` or `dest` pointed to an invalid path.
 
 <a id="ERR_FS_CP_FIFO_PIPE"></a>
 
+### `ERR_HTTP_BODY_NOT_ALLOWED`
+
+An error is thrown when writing to an HTTP response which does not allow
+contents. <a id="ERR_HTTP_BODY_NOT_ALLOWED"></a>
+
 ### `ERR_HTTP_CONTENT_LENGTH_MISMATCH`
 
 Response body size doesn't match with the specified content-length header value.
@@ -1437,6 +1443,12 @@ Status code was outside the regular status code range (100-999).
 ### `ERR_HTTP_REQUEST_TIMEOUT`
 
 The client has not sent the entire request within the allowed time.
+
+<a id="ERR_HTTP_SOCKET_ASSIGNED"></a>
+
+### `ERR_HTTP_SOCKET_ASSIGNED`
+
+The given [`ServerResponse`][] was already assigned a socket.
 
 <a id="ERR_HTTP_SOCKET_ENCODING"></a>
 
@@ -3590,6 +3602,7 @@ The native call from `process.cpuUsage` could not be processed.
 [`Object.getPrototypeOf`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getPrototypeOf
 [`Object.setPrototypeOf`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/setPrototypeOf
 [`REPL`]: repl.md
+[`ServerResponse`]: http.md#class-httpserverresponse
 [`Writable`]: stream.md#class-streamwritable
 [`child_process`]: child_process.md
 [`cipher.getAuthTag()`]: crypto.md#ciphergetauthtag

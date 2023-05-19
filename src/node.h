@@ -505,6 +505,9 @@ struct IsolateSettings {
 // feature during the build step by passing the --disable-shared-readonly-heap
 // flag to the configure script.
 //
+// The snapshot *must* be kept alive during the execution of the Isolate
+// that was created using it.
+//
 // Snapshots are an *experimental* feature. In particular, the embedder API
 // exposed through this class is subject to change or removal between Node.js
 // versions, including possible API and ABI breakage.
@@ -722,7 +725,8 @@ NODE_EXTERN ArrayBufferAllocator* GetArrayBufferAllocator(IsolateData* data);
 // a snapshot and have a main context that was read from that snapshot.
 NODE_EXTERN v8::Local<v8::Context> GetMainContext(Environment* env);
 
-NODE_EXTERN void OnFatalError(const char* location, const char* message);
+[[noreturn]] NODE_EXTERN void OnFatalError(const char* location,
+                                           const char* message);
 NODE_EXTERN void PromiseRejectCallback(v8::PromiseRejectMessage message);
 NODE_EXTERN bool AllowWasmCodeGenerationCallback(v8::Local<v8::Context> context,
                                             v8::Local<v8::String>);
@@ -1236,9 +1240,11 @@ NODE_EXTERN void AddLinkedBinding(Environment* env,
                                   const char* name,
                                   addon_context_register_func fn,
                                   void* priv);
-NODE_EXTERN void AddLinkedBinding(Environment* env,
-                                  const char* name,
-                                  napi_addon_register_func fn);
+NODE_EXTERN void AddLinkedBinding(
+    Environment* env,
+    const char* name,
+    napi_addon_register_func fn,
+    int32_t module_api_version = NODE_API_DEFAULT_MODULE_API_VERSION);
 
 /* Registers a callback with the passed-in Environment instance. The callback
  * is called after the event loop exits, but before the VM is disposed.
